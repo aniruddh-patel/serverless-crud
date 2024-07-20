@@ -1,0 +1,70 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: annni
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: movie-sls
+frameworkVersion: "4"
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  role: arn:aws:iam::063957467941:role/LabRole
+  stage: dev  # Default stage
+  environment:
+    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+
+functions:
+  createItem:
+    handler: handler.create
+    events:
+      - http:
+          path: items
+          method: post
+          cors: true
+
+  listItems:
+    handler: handler.listItems
+    events:
+      - http:
+          path: items
+          method: get
+          cors: true
+
+  getItem:
+    handler: handler.get
+    events:
+      - http:
+          path: items/{id}
+          method: get
+          cors: true
+
+  updateItem:
+    handler: handler.update
+    events:
+      - http:
+          path: items/{id}
+          method: put
+          cors: true
+
+  deleteItem:
+    handler: handler.delete
+    events:
+      - http:
+          path: items/{id}
+          method: delete
+          cors: true
+
+resources:
+  Resources:
+    ItemsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}
+        AttributeDefinitions:
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: email
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
